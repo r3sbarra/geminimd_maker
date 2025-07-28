@@ -6,139 +6,208 @@ document.addEventListener('DOMContentLoaded', () => {
     const importFile = document.getElementById('import-file');
     const copyButton = document.getElementById('copy-button');
     const downloadButton = document.getElementById('download-button');
-    const saveTemplateButton = document.getElementById('save-template-button');
+    const addSectionButton = document.getElementById('add-section-button');
+    const dynamicSectionsContainer = document.getElementById('dynamic-sections-container');
+    const sectionTemplate = document.getElementById('section-template');
+
+    const manageTemplatesButton = document.getElementById('manage-templates-button');
     const templateModal = document.getElementById('template-modal');
-    const closeModal = document.querySelector('.close-button');
+    const closeModal = templateModal.querySelector('.close-button');
+    const templateList = document.getElementById('template-list');
     const saveCustomTemplateButton = document.getElementById('save-custom-template-button');
     const templateNameInput = document.getElementById('template-name');
-    const templateSelect = document.getElementById('template');
 
-    const templates = {
-        custom: {
-            projectName: '',
-            projectDescription: '',
-            projectLanguage: 'Python',
-            projectOwner: '',
-            persona: '',
-            outputFormat: 'Markdown',
-            instructions: '',
-            usage: '',
-            contributing: ''
-        },
+    // Predefined templates
+    const predefinedTemplates = {
         basic: {
             projectName: 'My Awesome Project',
-            projectDescription: 'A brief description of my awesome project.',
-            projectLanguage: 'Python',
             projectOwner: 'Your Name',
-            persona: 'You are a helpful assistant.',
-            outputFormat: 'Markdown',
-            instructions: 'Follow standard coding practices.',
-            usage: 'Run `python main.py` to start.',
-            contributing: 'Please read the contributing guidelines before submitting a pull request.'
+            tools: [],
+            sections: [
+                { title: 'Description', content: 'A brief description of my awesome project.' },
+                { title: 'Language', content: 'Python' },
+                { title: 'Persona', content: 'You are a helpful assistant.' },
+                { title: 'Output Format', content: 'Markdown' },
+                { title: 'Instructions', content: 'Follow standard coding practices.' },
+                { title: 'Usage', content: 'Run `python main.py` to start.' },
+                { title: 'Contributing', content: 'Please read the contributing guidelines before submitting a pull request.' }
+            ]
         },
         'web-app': {
             projectName: 'My Web App',
-            projectDescription: 'A web application that does amazing things.',
-            projectLanguage: 'JavaScript',
             projectOwner: 'Your Name',
-            persona: 'You are a full-stack web developer.',
-            outputFormat: 'HTML',
-            instructions: 'Use React components and follow the Material Design guidelines.',
-            usage: 'Run `npm start` to launch the development server.',
-            contributing: 'Contributions are welcome! Please create an issue to discuss your ideas.'
+            tools: ['JavaScript', 'Web Fetch'],
+            sections: [
+                { title: 'Description', content: 'A web application that does amazing things.' },
+                { title: 'Language', content: 'JavaScript' },
+                { title: 'Persona', content: 'You are a full-stack web developer.' },
+                { title: 'Output Format', content: 'HTML' },
+                { title: 'Instructions', content: 'Use React components and follow the Material Design guidelines.' },
+                { title: 'Usage', content: 'Run `npm start` to launch the development server.' },
+                { title: 'Contributing', content: 'Contributions are welcome! Please create an issue to discuss your ideas.' }
+            ]
         },
         cli: {
             projectName: 'My CLI Tool',
-            projectDescription: 'A command-line interface for performing useful tasks.',
-            projectLanguage: 'Go',
             projectOwner: 'Your Name',
-            persona: 'You are a command-line tool expert.',
-            outputFormat: 'Markdown',
-            instructions: 'Use the Cobra library for commands and flags.',
-            usage: 'Run `./my-cli-tool --help` to see available commands.',
-            contributing: 'Please report any bugs or feature requests in the issue tracker.'
+            tools: ['Go', 'File System Tools'],
+            sections: [
+                { title: 'Description', content: 'A command-line interface for performing useful tasks.' },
+                { title: 'Language', content: 'Go' },
+                { title: 'Persona', content: 'You are a command-line tool expert.' },
+                { title: 'Output Format', content: 'Markdown' },
+                { title: 'Instructions', content: 'Use the Cobra library for commands and flags.' },
+                { title: 'Usage', content: 'Run `./my-cli-tool --help` to see available commands.' },
+                { title: 'Contributing', content: 'Please report any bugs or feature requests in the issue tracker.' }
+            ]
         }
     };
 
     let customTemplates = JSON.parse(localStorage.getItem('customTemplates')) || {};
 
-    function populateTemplateSelect() {
-        for (const key in customTemplates) {
-            if (!templateSelect.querySelector(`option[value="${key}"]`)) {
-                const option = document.createElement('option');
-                option.value = key;
-                option.textContent = key;
-                templateSelect.appendChild(option);
-            }
-        }
-    }
-
-    function generateGeminiContent() {
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
-
-        return `
-# ${data['project-name']}
-
-**Owner**: ${data['project-owner'] || 'N/A'}
-
-## Description
-
-${data['project-description']}
-
-## Language
-
-${data['project-language']}
-
-## Persona
-
-${data.persona || 'N/A'}
-
-## Output Format
-
-${data['output-format']}
-
-## Instructions
-
-${data.instructions || 'N/A'}
-
-## Usage
-
-${data.usage || 'N/A'}
-
-## Contributing
-
-${data.contributing || 'N/A'}
-
-`;
-    }
-
+    // --- Helper Functions ---
     function updatePreview() {
-        const content = generateGeminiContent();
-        geminiOutput.textContent = content;
+        const projectName = document.getElementById('project-name').value;
+        const projectOwner = document.getElementById('project-owner').value;
+        const selectedTools = Array.from(document.querySelectorAll('input[name="tool"]:checked')).map(cb => cb.value);
+
+        let geminiContent = `# ${projectName || '[Project Name]'}\n\n`;
+        geminiContent += `**Owner**: ${projectOwner || 'N/A'}\n\n`;
+
+        if (selectedTools.length > 0) {
+            geminiContent += `## Available Tools\n\n`;
+            selectedTools.forEach(tool => {
+                geminiContent += `- ${tool}\n`;
+            });
+            geminiContent += '\n';
+        }
+
+        document.querySelectorAll('.dynamic-section').forEach(sectionDiv => {
+            const title = sectionDiv.querySelector('.section-title').value.trim();
+            const content = sectionDiv.querySelector('.section-content').value.trim();
+            if (title && content) {
+                geminiContent += `## ${title}\n\n${content}\n\n`;
+            }
+        });
+
+        geminiOutput.textContent = geminiContent;
         hljs.highlightElement(geminiOutput);
     }
 
-    function setTemplate(templateName) {
-        const allTemplates = { ...templates, ...customTemplates };
-        const template = allTemplates[templateName];
-        if (template) {
-            for (const key in template) {
-                const element = document.getElementById(key.replace(/([A-Z])/g, "-$1").toLowerCase());
-                if (element) {
-                    element.value = template[key];
-                }
+    function addSection(title = '', content = '') {
+        const clone = sectionTemplate.content.cloneNode(true);
+        const sectionDiv = clone.querySelector('.dynamic-section');
+        const titleInput = sectionDiv.querySelector('.section-title');
+        const contentTextarea = sectionDiv.querySelector('.section-content');
+        const removeButton = sectionDiv.querySelector('.remove-section-button');
+        const markdownToolbar = sectionDiv.querySelector('.markdown-toolbar');
+
+        titleInput.value = title;
+        contentTextarea.value = content;
+
+        removeButton.addEventListener('click', () => {
+            sectionDiv.remove();
+            updatePreview();
+        });
+
+        markdownToolbar.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                applyMarkdown(contentTextarea, e.target.dataset.md);
             }
-        }
+        });
+
+        [titleInput, contentTextarea].forEach(input => {
+            input.addEventListener('input', updatePreview);
+        });
+
+        dynamicSectionsContainer.appendChild(clone);
         updatePreview();
     }
 
-    form.addEventListener('input', updatePreview);
+    function applyMarkdown(textarea, type) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = textarea.value.substring(start, end);
+        let newText = '';
 
-    templateSelect.addEventListener('change', (e) => {
-        setTemplate(e.target.value);
-    });
+        switch (type) {
+            case 'h2':
+                newText = `## ${selectedText || 'Heading'}\n`;
+                break;
+            case 'bold':
+                newText = `**${selectedText || 'bold text'}**`;
+                break;
+            case 'italic':
+                newText = `*${selectedText || 'italic text'}*`;
+                break;
+            case 'link':
+                newText = `[${selectedText || 'Link Text'}](https://example.com)`;
+                break;
+            case 'list':
+                newText = `- ${selectedText || 'List Item'}`; // Simple list item
+                break;
+        }
 
+        textarea.value = textarea.value.substring(0, start) + newText + textarea.value.substring(end);
+        textarea.focus();
+        updatePreview();
+    }
+
+    function loadTemplate(templateData) {
+        document.getElementById('project-name').value = templateData.projectName || '';
+        document.getElementById('project-owner').value = templateData.projectOwner || '';
+
+        // Clear existing dynamic sections
+        dynamicSectionsContainer.innerHTML = '';
+
+        // Set tools
+        document.querySelectorAll('input[name="tool"]').forEach(cb => {
+            cb.checked = templateData.tools.includes(cb.value);
+        });
+
+        // Add dynamic sections from template
+        templateData.sections.forEach(section => {
+            addSection(section.title, section.content);
+        });
+        updatePreview();
+    }
+
+    function populateTemplateManagementModal() {
+        templateList.innerHTML = '';
+        const allTemplates = { ...predefinedTemplates, ...customTemplates };
+
+        for (const name in allTemplates) {
+            const templateDiv = document.createElement('div');
+            templateDiv.classList.add('template-item');
+            templateDiv.innerHTML = `
+                <span>${name}</span>
+                <button class="apply-template-button" data-template-name="${name}">Apply</button>
+                ${predefinedTemplates[name] ? '' : `<button class="delete-template-button" data-template-name="${name}">Delete</button>`}
+            `;
+            templateList.appendChild(templateDiv);
+        }
+
+        templateList.querySelectorAll('.apply-template-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const name = e.target.dataset.templateName;
+                loadTemplate(allTemplates[name]);
+                templateModal.style.display = 'none';
+            });
+        });
+
+        templateList.querySelectorAll('.delete-template-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const name = e.target.dataset.templateName;
+                if (confirm(`Are you sure you want to delete template \'${name}\'?`)) {
+                    delete customTemplates[name];
+                    localStorage.setItem('customTemplates', JSON.stringify(customTemplates));
+                    populateTemplateManagementModal(); // Refresh the list
+                }
+            });
+        });
+    }
+
+    // --- Event Listeners ---
     darkModeToggle.addEventListener('click', () => {
         document.body.classList.toggle('dark-mode');
         localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
@@ -157,37 +226,38 @@ ${data.contributing || 'N/A'}
         if (file) {
             const reader = new FileReader();
             reader.onload = (event) => {
-                // This is a simple parsing logic. A more robust solution would be needed for complex GEMINI.md files.
                 const content = event.target.result;
+                // Simple parsing for import - might need more robust logic for complex MD
                 const lines = content.split('\n');
-                const data = {};
-                let currentSection = '';
+                let projectName = '';
+                let projectOwner = '';
+                const sections = [];
+                let currentSectionTitle = '';
+                let currentSectionContent = '';
 
                 lines.forEach(line => {
                     if (line.startsWith('# ')) {
-                        data.projectName = line.substring(2);
-                    } else if (line.startsWith('**Owner**')) {
-                        data.projectOwner = line.split(':')[1].trim();
+                        projectName = line.substring(2).trim();
+                    } else if (line.startsWith('**Owner**:')) {
+                        projectOwner = line.substring(9).trim();
                     } else if (line.startsWith('## ')) {
-                        currentSection = line.substring(3).toLowerCase();
-                    } else if (currentSection && line.trim()) {
-                        if (!data[currentSection]) {
-                            data[currentSection] = '';
+                        if (currentSectionTitle && currentSectionContent) {
+                            sections.push({ title: currentSectionTitle, content: currentSectionContent.trim() });
                         }
-                        data[currentSection] += line + '\n';
+                        currentSectionTitle = line.substring(3).trim();
+                        currentSectionContent = '';
+                    } else {
+                        currentSectionContent += line + '\n';
                     }
                 });
+                if (currentSectionTitle && currentSectionContent) {
+                    sections.push({ title: currentSectionTitle, content: currentSectionContent.trim() });
+                }
 
-                document.getElementById('project-name').value = data.projectName || '';
-                document.getElementById('project-owner').value = data.projectOwner || '';
-                document.getElementById('project-description').value = data.description || '';
-                document.getElementById('project-language').value = data.language || '';
-                document.getElementById('persona').value = data.persona || '';
-                document.getElementById('output-format').value = data.outputFormat || '';
-                document.getElementById('instructions').value = data.instructions || '';
-                document.getElementById('usage').value = data.usage || '';
-                document.getElementById('contributing').value = data.contributing || '';
-
+                document.getElementById('project-name').value = projectName;
+                document.getElementById('project-owner').value = projectOwner;
+                dynamicSectionsContainer.innerHTML = ''; // Clear existing
+                sections.forEach(sec => addSection(sec.title, sec.content));
                 updatePreview();
             };
             reader.readAsText(file);
@@ -214,7 +284,10 @@ ${data.contributing || 'N/A'}
         URL.revokeObjectURL(url);
     });
 
-    saveTemplateButton.addEventListener('click', () => {
+    addSectionButton.addEventListener('click', () => addSection());
+
+    manageTemplatesButton.addEventListener('click', () => {
+        populateTemplateManagementModal();
         templateModal.style.display = 'block';
     });
 
@@ -231,17 +304,36 @@ ${data.contributing || 'N/A'}
     saveCustomTemplateButton.addEventListener('click', () => {
         const name = templateNameInput.value.trim();
         if (name) {
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            customTemplates[name] = data;
+            const projectName = document.getElementById('project-name').value;
+            const projectOwner = document.getElementById('project-owner').value;
+            const tools = Array.from(document.querySelectorAll('input[name="tool"]:checked')).map(cb => cb.value);
+            const sections = [];
+            document.querySelectorAll('.dynamic-section').forEach(sectionDiv => {
+                sections.push({
+                    title: sectionDiv.querySelector('.section-title').value,
+                    content: sectionDiv.querySelector('.section-content').value
+                });
+            });
+
+            customTemplates[name] = { projectName, projectOwner, tools, sections };
             localStorage.setItem('customTemplates', JSON.stringify(customTemplates));
-            populateTemplateSelect();
-            templateSelect.value = name;
+            populateTemplateManagementModal(); // Refresh the list in the modal
             templateModal.style.display = 'none';
             templateNameInput.value = '';
+            alert(`Template \'${name}\' saved!`);
+        } else {
+            alert('Please enter a template name.');
         }
     });
 
-    populateTemplateSelect();
-    setTemplate('basic');
+    // Initial setup
+    addSection('Description', 'A brief description of the project.');
+    addSection('Language', 'Python');
+    addSection('Persona', 'You are a helpful assistant.');
+    addSection('Output Format', 'Markdown');
+    addSection('Instructions', 'Follow standard coding practices.');
+    addSection('Usage', '[Instructions on how to use the project]');
+    addSection('Contributing', '[Guidelines for contributing]');
+
+    updatePreview();
 });
