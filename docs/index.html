@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEMINI.md Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GEMINI.md Generator</h1>
+            <div class="toolbar">
+                <button id="dark-mode-toggle">Toggle Dark Mode</button>
+                <button id="import-button">Import GEMINI.md</button>
+                <input type="file" id="import-file" accept=".md" style="display: none;">
+            </div>
+        </header>
+        <main>
+            <div class="form-container">
+                <form id="gemini-form">
+                    <label for="template">Select a Template:</label>
+                    <select id="template" name="template">
+                        <option value="custom">Custom</option>
+                        <option value="basic">Basic Project</option>
+                        <option value="web-app">Web App</option>
+                        <option value="cli">CLI Tool</option>
+                    </select>
+
+                    <label for="project-name">Project Name:</label>
+                    <input type="text" id="project-name" name="project-name" required>
+
+                    <label for="project-description">Project Description:</label>
+                    <textarea id="project-description" name="project-description" rows="4" required></textarea>
+
+                    <label for="project-language">Primary Language:</label>
+                    <select id="project-language" name="project-language">
+                        <option value="Python">Python</option>
+                        <option value="JavaScript">JavaScript</option>
+                        <option value="TypeScript">TypeScript</option>
+                        <option value="Go">Go</option>
+                        <option value="Java">Java</option>
+                        <option value="C++">C++</option>
+                        <option value="C#">C#</option>
+                        <option value="Rust">Rust</option>
+                        <option value="Other">Other</option>
+                    </select>
+
+                    <label for="project-owner">Project Owner:</label>
+                    <input type="text" id="project-owner" name="project-owner">
+
+                    <label for="persona">Persona:</label>
+                    <textarea id="persona" name="persona" rows="4" placeholder="e.g., You are a senior Go developer specializing in performance optimization."></textarea>
+
+                    <label for="output-format">Output Format:</label>
+                    <select id="output-format" name="output-format">
+                        <option value="Markdown">Markdown</option>
+                        <option value="JSON">JSON</option>
+                        <option value="HTML">HTML</option>
+                    </select>
+
+                    <label for="instructions">Instructions:</label>
+                    <textarea id="instructions" name="instructions" rows="4" placeholder="e.g., Use the following coding style..."></textarea>
+
+                    <label for="usage">Usage:</label>
+                    <textarea id="usage" name="usage" rows="4" placeholder="e.g., Instructions on how to use the project."></textarea>
+
+                    <label for="contributing">Contributing Guidelines:</label>
+                    <textarea id="contributing" name="contributing" rows="4" placeholder="e.g., Guidelines for contributing to the project."></textarea>
+
+                    <button type="submit">Generate GEMINI.md</button>
+                </form>
+            </div>
+            <div class="preview-container">
+                <h2>Live Preview</h2>
+                <pre><code id="gemini-output" class="markdown"></code></pre>
+                <div class="button-group">
+                    <button id="copy-button">Copy to Clipboard</button>
+                    <button id="download-button">Download GEMINI.md</button>
+                    <button id="save-template-button">Save as Template</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="template-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Save Custom Template</h2>
+            <label for="template-name">Template Name:</label>
+            <input type="text" id="template-name" name="template-name" required>
+            <button id="save-custom-template-button">Save</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/markdown.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
